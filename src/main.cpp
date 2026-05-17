@@ -1,134 +1,86 @@
 #include <Arduino.h>
-#include <TFT_eSPI.h>
-#include <SPI.h>
+#include <Arduino_GFX_Library.h>
 
-TFT_eSPI tft = TFT_eSPI();
+// Waveshare ESP32-C6 LCD 1.47
+#define TFT_BL 15
+#define TFT_CS 14
+#define TFT_DC 7
+#define TFT_RST 21
+#define TFT_SCK 6
+#define TFT_MOSI 5
+
+Arduino_DataBus *bus = new Arduino_ESP32SPI(
+  TFT_DC,
+  TFT_CS,
+  TFT_SCK,
+  TFT_MOSI,
+  GFX_NOT_DEFINED
+);
+
+Arduino_GFX *gfx = new Arduino_ST7789(
+  bus,
+  TFT_RST,
+  0,
+  true,
+  172,
+  320,
+  34,
+  0,
+  34,
+  0
+);
 
 int speedValue = 0;
-int throttleValue = 0;
-int steeringValue = 0;
+int throttle = 0;
 
-void drawGauge(int speed)
+void drawUI()
 {
-    int centerX = 160;
-    int centerY = 120;
-    int radius = 95;
+  gfx->fillScreen(BLACK);
 
-    tft.drawCircle(centerX, centerY, radius, TFT_WHITE);
+  gfx->setTextColor(CYAN);
+  gfx->setTextSize(3);
+  gfx->setCursor(40, 20);
+  gfx->println("RC DASH");
 
-    for (int i = -120; i <= 120; i += 10)
-    {
-        float angle = radians(i);
+  gfx->drawRect(20, 80, 280, 30, WHITE);
+  gfx->fillRect(22, 82, speedValue * 2, 26, GREEN);
 
-        int x1 = centerX + cos(angle) * (radius - 10);
-        int y1 = centerY + sin(angle) * (radius - 10);
+  gfx->setCursor(20, 130);
+  gfx->setTextColor(YELLOW);
+  gfx->print("Speed: ");
+  gfx->print(speedValue);
 
-        int x2 = centerX + cos(angle) * radius;
-        int y2 = centerY + sin(angle) * radius;
+  gfx->drawRect(20, 180, 280, 30, WHITE);
+  gfx->fillRect(22, 182, throttle * 2, 26, RED);
 
-        tft.drawLine(x1, y1, x2, y2, TFT_WHITE);
-    }
-
-    float needle = map(speed, 0, 240, -120, 120);
-    float angle = radians(needle);
-
-    int x = centerX + cos(angle) * (radius - 20);
-    int y = centerY + sin(angle) * (radius - 20);
-
-    tft.drawLine(centerX, centerY, x, y, TFT_RED);
-
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
-
-    tft.drawString(String(speed), centerX, centerY - 10, 7);
-    tft.drawString("KM/H", centerX, centerY + 40, 4);
-}
-
-void drawThrottle(int value)
-{
-    int barX = 20;
-    int barY = 60;
-    int barW = 30;
-    int barH = 140;
-
-    tft.drawRect(barX, barY, barW, barH, TFT_WHITE);
-
-    int fill = map(value, 0, 100, 0, barH);
-
-    tft.fillRect(barX + 2,
-                 barY + barH - fill,
-                 barW - 4,
-                 fill,
-                 TFT_GREEN);
-
-    tft.setCursor(10, 20);
-    tft.setTextSize(2);
-    tft.print("THR ");
-    tft.print(value);
-    tft.print("%");
-}
-
-void drawSteering(int angle)
-{
-    int x = 280;
-    int y = 120;
-
-    tft.drawCircle(x, y, 40, TFT_WHITE);
-
-    float a = radians(angle);
-
-    int x2 = x + sin(a) * 30;
-    int y2 = y - cos(a) * 30;
-
-    tft.drawLine(x, y, x2, y2, TFT_GREEN);
-
-    tft.setCursor(240, 20);
-    tft.setTextSize(2);
-    tft.print("STR ");
-    tft.print(angle);
-}
-
-void updateDisplay()
-{
-    tft.fillScreen(TFT_BLACK);
-
-    drawGauge(speedValue);
-    drawThrottle(throttleValue);
-    drawSteering(steeringValue);
+  gfx->setCursor(20, 230);
+  gfx->setTextColor(WHITE);
+  gfx->print("Throttle: ");
+  gfx->print(throttle);
 }
 
 void setup()
 {
-    Serial.begin(115200);
+  Serial.begin(115200);
 
-    tft.init();
-    tft.setRotation(1);
+  pinMode(TFT_BL, OUTPUT);
+  digitalWrite(TFT_BL, HIGH);
 
-    tft.fillScreen(TFT_BLACK);
+  gfx->begin();
+  gfx->fillScreen(BLACK);
 
-    updateDisplay();
+  drawUI();
 }
 
 void loop()
 {
-    static unsigned long lastUpdate = 0;
+  speedValue++;
+  throttle++;
 
-    if (millis() - lastUpdate > 100)
-    {
-        lastUpdate = millis();
+  if(speedValue > 100) speedValue = 0;
+  if(throttle > 100) throttle = 0;
 
-        speedValue += 2;
-        if (speedValue > 240)
-            speedValue = 0;
+  drawUI();
 
-        throttleValue += 1;
-        if (throttleValue > 100)
-            throttleValue = 0;
-
-        steeringValue += 5;
-        if (steeringValue > 45)
-            steeringValue = -45;
-
-        updateDisplay();
-    }
+  delay(100);
 }
