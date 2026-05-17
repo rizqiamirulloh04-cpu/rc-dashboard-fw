@@ -2,21 +2,10 @@
 
 void setup() {
     Serial.begin(115200);
-
-    Serial.println("RC Dashboard Start");
+    Serial.println("Dashboard RC Start");
 }
 
 void loop() {
-    static int speed = 0;
-
-    Serial.print("Speed: ");
-    Serial.println(speed);
-
-    speed++;
-
-    if(speed > 200) {
-        speed = 0;
-    }
-
-    delay(100);
+    Serial.println("ESP32-C6 Running");
+    delay(1000);
 }
