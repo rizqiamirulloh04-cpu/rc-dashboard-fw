@@ -1,522 +1,197 @@
 #include <Arduino.h>
-#include <Arduino_GFX_Library.h>
 #include <lvgl.h>
-#include <math.h>
+#include <TFT_eSPI.h>
 
-// ============================================
-// DISPLAY CONFIG
-// ============================================
-
+// ===========================
+// Ukuran LCD Waveshare
+// ESP32-C6 LCD 1.47"
+// ===========================
 #define SCREEN_WIDTH   172
 #define SCREEN_HEIGHT  320
 
-Arduino_DataBus *bus = new Arduino_ESP32SPI(
-    15,   // DC
-    14,   // CS
-    7,    // SCK
-    6,    // MOSI
-    -1    // MISO
-);
+// ===========================
+// TFT
+// ===========================
+TFT_eSPI lcd = TFT_eSPI();
 
-Arduino_GFX *gfx = new Arduino_ST7789(
-    bus,
-    21,   // RST
-    1,    // rotation
-    true, // IPS
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT
-);
+// ===========================
+// LVGL Display
+// ===========================
+static lv_display_t *disp;
 
-// ============================================
-// PWM INPUT
-// ============================================
+// Buffer render sebagian layar
+static lv_color_t buf1[SCREEN_WIDTH * 40];
 
-#define CH1_PIN 4
-#define CH2_PIN 5
-#define CH3_PIN 8
-
-// ============================================
-// LVGL BUFFER
-// ============================================
-
-static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf[SCREEN_WIDTH * 20];
-
-// ============================================
-// UI OBJECTS
-// ============================================
-
-lv_obj_t *speedArc;
-lv_obj_t *speedLabel;
-lv_obj_t *rpmBar;
-lv_obj_t *throttleBar;
-lv_obj_t *steeringLabel;
-
-lv_obj_t *leftSignal;
-lv_obj_t *rightSignal;
-
-lv_obj_t *needleLine;
-
-// ============================================
-// NEEDLE POINTS
-// ============================================
-
-static lv_point_precise_t needle_points[] =
-{
-    {0, 0},
-    {0, -60}
-};
-
-// ============================================
-// VALUES
-// ============================================
-
-int speedValue = 0;
-int rpmValue = 0;
-int throttleValue = 0;
-int steeringValue = 0;
-
-// ============================================
-// SIGNALS
-// ============================================
-
-bool leftBlink = false;
-bool rightBlink = false;
-bool blinkState = false;
-
-unsigned long blinkTimer = 0;
-
-// ============================================
-// DISPLAY FLUSH
-// ============================================
-
-void my_disp_flush(lv_disp_drv_t *disp,
+// ===========================
+// Flush Callback
+// ===========================
+void my_disp_flush(lv_display_t *disp,
                    const lv_area_t *area,
-                   lv_color_t *color_p)
+                   uint8_t *px_map)
 {
     uint32_t w = area->x2 - area->x1 + 1;
     uint32_t h = area->y2 - area->y1 + 1;
 
-    gfx->draw16bitRGBBitmap(
+    lcd.startWrite();
+
+    lcd.setAddrWindow(
         area->x1,
         area->y1,
-        (uint16_t *)&color_p->full,
         w,
         h
     );
 
-    lv_disp_flush_ready(disp);
+    lcd.pushColors(
+        (uint16_t *)px_map,
+        w * h,
+        true
+    );
+
+    lcd.endWrite();
+
+    lv_display_flush_ready(disp);
 }
 
-// ============================================
-// READ PWM
-// ============================================
-
-int readPWM(int pin)
+// ===========================
+// UI Dashboard
+// ===========================
+void create_dashboard()
 {
-    uint32_t pulse = pulseIn(pin, HIGH, 25000);
-
-    if (pulse < 900 || pulse > 2100)
-        return 1500;
-
-    return pulse;
-}
-
-// ============================================
-// BOOT ANIMATION
-// ============================================
-
-void bootAnimation()
-{
-    lv_obj_t *title = lv_label_create(lv_scr_act());
-
-    lv_obj_set_style_text_font(
-        title,
-        &lv_font_montserrat_32,
-        0);
-
-    lv_obj_set_style_text_color(
-        title,
-        lv_color_white(),
-        0);
-
-    lv_label_set_text(
-        title,
-        "RC DASH");
-
-    lv_obj_center(title);
-
-    lv_timer_handler();
-
-    delay(1500);
-
-    lv_obj_clean(lv_scr_act());
-}
-
-// ============================================
-// CREATE NEEDLE
-// ============================================
-
-void createNeedle()
-{
-    needleLine = lv_line_create(lv_scr_act());
-
-    lv_line_set_points(
-        needleLine,
-        needle_points,
-        2);
-
-    lv_obj_set_style_line_width(
-        needleLine,
-        4,
-        0);
-
-    lv_obj_set_style_line_color(
-        needleLine,
-        lv_color_hex(0xFF2200),
-        0);
-}
-
-// ============================================
-// UPDATE NEEDLE
-// ============================================
-
-void updateNeedle(int speed)
-{
-    float angle = map(speed,
-                      0,
-                      240,
-                      -135,
-                      135);
-
-    float rad = angle * 0.0174533;
-
-    int radius = 70;
-
-    int cx = 86;
-    int cy = 100;
-
-    int x = cx + radius * cos(rad);
-    int y = cy + radius * sin(rad);
-
-    needle_points[0].x = cx;
-    needle_points[0].y = cy;
-
-    needle_points[1].x = x;
-    needle_points[1].y = y;
-
-    lv_line_set_points(
-        needleLine,
-        needle_points,
-        2);
-}
-
-// ============================================
-// CREATE UI
-// ============================================
-
-void createUI()
-{
+    // Background
     lv_obj_set_style_bg_color(
-        lv_scr_act(),
-        lv_color_hex(0x000000),
-        0);
+        lv_screen_active(),
+        lv_color_hex(0x101010),
+        0
+    );
 
-    // SPEED ARC
-    speedArc = lv_arc_create(lv_scr_act());
+    // Title
+    lv_obj_t *title = lv_label_create(lv_screen_active());
 
-    lv_obj_set_size(speedArc,
-                    160,
-                    160);
-
-    lv_obj_align(speedArc,
-                 LV_ALIGN_TOP_MID,
-                 0,
-                 20);
-
-    lv_arc_set_rotation(speedArc,
-                        135);
-
-    lv_arc_set_bg_angles(speedArc,
-                         0,
-                         270);
-
-    lv_arc_set_range(speedArc,
-                     0,
-                     240);
-
-    lv_arc_set_value(speedArc,
-                     0);
-
-    lv_obj_remove_style(
-        speedArc,
-        NULL,
-        LV_PART_KNOB);
-
-    // SPEED LABEL
-    speedLabel = lv_label_create(lv_scr_act());
-
-    lv_obj_set_style_text_font(
-        speedLabel,
-        &lv_font_montserrat_48,
-        0);
+    lv_label_set_text(title, "RC DASHBOARD");
 
     lv_obj_set_style_text_color(
-        speedLabel,
-        lv_color_white(),
-        0);
-
-    lv_label_set_text(speedLabel,
-                      "0");
-
-    lv_obj_align(speedLabel,
-                 LV_ALIGN_TOP_MID,
-                 0,
-                 70);
-
-    // RPM BAR
-    rpmBar = lv_bar_create(lv_scr_act());
-
-    lv_obj_set_size(rpmBar,
-                    140,
-                    10);
-
-    lv_obj_align(rpmBar,
-                 LV_ALIGN_BOTTOM_MID,
-                 0,
-                 -20);
-
-    lv_bar_set_range(rpmBar,
-                     0,
-                     8000);
-
-    // THROTTLE
-    throttleBar = lv_bar_create(lv_scr_act());
-
-    lv_obj_set_size(throttleBar,
-                    18,
-                    100);
-
-    lv_obj_align(throttleBar,
-                 LV_ALIGN_LEFT_MID,
-                 10,
-                 20);
-
-    lv_bar_set_range(throttleBar,
-                     0,
-                     100);
-
-    // STEERING
-    steeringLabel = lv_label_create(lv_scr_act());
-
-    lv_obj_set_style_text_color(
-        steeringLabel,
-        lv_color_white(),
-        0);
-
-    lv_label_set_text(
-        steeringLabel,
-        "0 DEG");
-
-    lv_obj_align(steeringLabel,
-                 LV_ALIGN_RIGHT_MID,
-                 -10,
-                 20);
-
-    // LEFT SIGNAL
-    leftSignal = lv_label_create(lv_scr_act());
+        title,
+        lv_color_hex(0x00FFCC),
+        0
+    );
 
     lv_obj_set_style_text_font(
-        leftSignal,
+        title,
+        &lv_font_montserrat_20,
+        0
+    );
+
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+
+    // Speed Label
+    lv_obj_t *speed = lv_label_create(lv_screen_active());
+
+    lv_label_set_text(speed, "SPEED\n72");
+
+    lv_obj_set_style_text_color(
+        speed,
+        lv_color_hex(0xFFFFFF),
+        0
+    );
+
+    lv_obj_set_style_text_font(
+        speed,
         &lv_font_montserrat_32,
-        0);
+        0
+    );
+
+    lv_obj_align(speed, LV_ALIGN_CENTER, 0, -20);
+
+    // Battery Bar
+    lv_obj_t *bar = lv_bar_create(lv_screen_active());
+
+    lv_obj_set_size(bar, 120, 18);
+
+    lv_obj_align(bar, LV_ALIGN_BOTTOM_MID, 0, -30);
+
+    lv_bar_set_range(bar, 0, 100);
+
+    lv_bar_set_value(bar, 85, LV_ANIM_OFF);
+
+    lv_obj_set_style_bg_color(
+        bar,
+        lv_color_hex(0x303030),
+        LV_PART_MAIN
+    );
+
+    lv_obj_set_style_bg_color(
+        bar,
+        lv_color_hex(0x00FF00),
+        LV_PART_INDICATOR
+    );
+
+    // Battery Text
+    lv_obj_t *bat = lv_label_create(lv_screen_active());
+
+    lv_label_set_text(bat, "BATTERY 85%");
 
     lv_obj_set_style_text_color(
-        leftSignal,
-        lv_color_hex(0xFFD000),
-        0);
+        bat,
+        lv_color_hex(0xFFFFFF),
+        0
+    );
 
-    lv_label_set_text(
-        leftSignal,
-        LV_SYMBOL_LEFT);
-
-    lv_obj_align(leftSignal,
-                 LV_ALIGN_TOP_LEFT,
-                 10,
-                 10);
-
-    // RIGHT SIGNAL
-    rightSignal = lv_label_create(lv_scr_act());
-
-    lv_obj_set_style_text_font(
-        rightSignal,
-        &lv_font_montserrat_32,
-        0);
-
-    lv_obj_set_style_text_color(
-        rightSignal,
-        lv_color_hex(0xFFD000),
-        0);
-
-    lv_label_set_text(
-        rightSignal,
-        LV_SYMBOL_RIGHT);
-
-    lv_obj_align(rightSignal,
-                 LV_ALIGN_TOP_RIGHT,
-                 -10,
-                 10);
-
-    createNeedle();
+    lv_obj_align_to(
+        bat,
+        bar,
+        LV_ALIGN_OUT_TOP_MID,
+        0,
+        -8
+    );
 }
 
-// ============================================
-// UPDATE SIGNAL
-// ============================================
-
-void updateSignal()
-{
-    if (steeringValue < -20)
-    {
-        leftBlink = true;
-        rightBlink = false;
-    }
-    else if (steeringValue > 20)
-    {
-        leftBlink = false;
-        rightBlink = true;
-    }
-    else
-    {
-        leftBlink = false;
-        rightBlink = false;
-    }
-
-    if (millis() - blinkTimer > 500)
-    {
-        blinkState = !blinkState;
-        blinkTimer = millis();
-    }
-
-    if (leftBlink && blinkState)
-        lv_obj_clear_flag(leftSignal, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(leftSignal, LV_OBJ_FLAG_HIDDEN);
-
-    if (rightBlink && blinkState)
-        lv_obj_clear_flag(rightSignal, LV_OBJ_FLAG_HIDDEN);
-    else
-        lv_obj_add_flag(rightSignal, LV_OBJ_FLAG_HIDDEN);
-}
-
-// ============================================
-// UPDATE DASHBOARD
-// ============================================
-
-void updateDashboard()
-{
-    int ch1 = readPWM(CH1_PIN);
-    int ch2 = readPWM(CH2_PIN);
-
-    steeringValue = map(ch1,
-                        1000,
-                        2000,
-                        -90,
-                        90);
-
-    throttleValue = map(ch2,
-                        1000,
-                        2000,
-                        0,
-                        100);
-
-    speedValue = map(ch2,
-                     1000,
-                     2000,
-                     0,
-                     240);
-
-    rpmValue = map(ch2,
-                   1000,
-                   2000,
-                   0,
-                   8000);
-
-    lv_arc_set_value(speedArc,
-                     speedValue);
-
-    lv_label_set_text_fmt(speedLabel,
-                          "%d",
-                          speedValue);
-
-    lv_bar_set_value(rpmBar,
-                     rpmValue,
-                     LV_ANIM_ON);
-
-    lv_bar_set_value(throttleBar,
-                     throttleValue,
-                     LV_ANIM_ON);
-
-    lv_label_set_text_fmt(steeringLabel,
-                          "%d DEG",
-                          steeringValue);
-
-    updateNeedle(speedValue);
-
-    updateSignal();
-}
-
-// ============================================
-// SETUP
-// ============================================
-
+// ===========================
+// Setup
+// ===========================
 void setup()
 {
     Serial.begin(115200);
 
-    pinMode(CH1_PIN, INPUT);
-    pinMode(CH2_PIN, INPUT);
-    pinMode(CH3_PIN, INPUT);
+    // TFT Init
+    lcd.init();
 
-    gfx->begin();
+    lcd.setRotation(0);
 
-    gfx->fillScreen(BLACK);
+    lcd.fillScreen(TFT_BLACK);
 
+    // LVGL Init
     lv_init();
 
-    lv_disp_draw_buf_init(
-        &draw_buf,
-        buf,
-        NULL,
-        SCREEN_WIDTH * 20
+    // Create display
+    disp = lv_display_create(
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT
     );
 
-    static lv_disp_drv_t disp_drv;
+    // Flush callback
+    lv_display_set_flush_cb(
+        disp,
+        my_disp_flush
+    );
 
-    lv_disp_drv_init(&disp_drv);
+    // Display buffer
+    lv_display_set_buffers(
+        disp,
+        buf1,
+        NULL,
+        sizeof(buf1),
+        LV_DISPLAY_RENDER_MODE_PARTIAL
+    );
 
-    disp_drv.hor_res = SCREEN_WIDTH;
-    disp_drv.ver_res = SCREEN_HEIGHT;
-
-    disp_drv.flush_cb = my_disp_flush;
-
-    disp_drv.draw_buf = &draw_buf;
-
-    lv_disp_drv_register(&disp_drv);
-
-    bootAnimation();
-
-    createUI();
+    // Create UI
+    create_dashboard();
 }
 
-// ============================================
-// LOOP
-// ============================================
-
+// ===========================
+// Loop
+// ===========================
 void loop()
 {
-    updateDashboard();
-
     lv_timer_handler();
 
     delay(5);
