@@ -13,7 +13,9 @@ class LGFX : public lgfx::LGFX_Device
 public:
     LGFX(void)
     {
+        // =========================
         // SPI BUS
+        // =========================
         {
             auto cfg = _bus.config();
 
@@ -34,10 +36,13 @@ public:
             cfg.pin_dc   = 15;
 
             _bus.config(cfg);
+
             _panel.setBus(&_bus);
         }
 
-        // LCD PANEL
+        // =========================
+        // PANEL
+        // =========================
         {
             auto cfg = _panel.config();
 
@@ -59,9 +64,11 @@ public:
             cfg.dummy_read_pixel = 8;
             cfg.dummy_read_bits  = 1;
 
-            cfg.readable   = false;
-            cfg.invert     = true;
-            cfg.rgb_order  = false;
+            cfg.readable = false;
+
+            cfg.invert = true;
+            cfg.rgb_order = false;
+
             cfg.dlen_16bit = false;
 
             cfg.bus_shared = true;
@@ -69,7 +76,9 @@ public:
             _panel.config(cfg);
         }
 
+        // =========================
         // BACKLIGHT
+        // =========================
         {
             auto cfg = _light.config();
 
@@ -92,15 +101,15 @@ public:
 
 LGFX tft;
 
-static lv_display_t* display;
+static lv_display_t *display;
 
-// buffer kecil supaya ringan
-static lv_color_t buf1[320 * 20];
+// buffer
+static lv_color_t buf1[172 * 20];
 
 
-// =======================
-// LVGL FLUSH
-// =======================
+// =========================
+// FLUSH CALLBACK
+// =========================
 
 static void flush_cb(
     lv_display_t *disp,
@@ -130,22 +139,22 @@ static void flush_cb(
 }
 
 
-// =======================
+// =========================
 // UI OBJECT
-// =======================
+// =========================
 
 lv_obj_t *speedLabel;
 lv_obj_t *speedArc;
 lv_obj_t *batteryBar;
 
 
-// =======================
-// DASHBOARD
-// =======================
+// =========================
+// DASHBOARD UI
+// =========================
 
 void create_dashboard()
 {
-    // background hitam
+    // background
     lv_obj_set_style_bg_color(
         lv_screen_active(),
         lv_color_hex(0x050816),
@@ -158,9 +167,10 @@ void create_dashboard()
         0
     );
 
-    // =========================
+
+    // =====================
     // SPEED TEXT
-    // =========================
+    // =====================
 
     speedLabel = lv_label_create(
         lv_screen_active()
@@ -177,26 +187,23 @@ void create_dashboard()
         0
     );
 
-    // gunakan font 20 supaya tidak error
     lv_obj_set_style_text_font(
         speedLabel,
         &lv_font_montserrat_20,
         0
     );
 
-    // posisi tengah atas
     lv_obj_align(
         speedLabel,
         LV_ALIGN_TOP_MID,
         0,
-        15
+        30
     );
 
 
-
-    // =========================
-    // ARC SPEEDOMETER
-    // =========================
+    // =====================
+    // ARC
+    // =====================
 
     speedArc = lv_arc_create(
         lv_screen_active()
@@ -204,18 +211,17 @@ void create_dashboard()
 
     lv_obj_set_size(
         speedArc,
-        120,
-        120
+        100,
+        100
     );
 
     lv_obj_align(
         speedArc,
         LV_ALIGN_CENTER,
         0,
-        10
+        -10
     );
 
-    // hilangkan knob
     lv_obj_remove_style(
         speedArc,
         NULL,
@@ -244,38 +250,34 @@ void create_dashboard()
         0
     );
 
-    // warna background arc
     lv_obj_set_style_arc_color(
         speedArc,
         lv_color_hex(0x222222),
         LV_PART_MAIN
     );
 
-    // warna indicator arc
     lv_obj_set_style_arc_color(
         speedArc,
         lv_color_hex(0x00E5FF),
         LV_PART_INDICATOR
     );
 
-    // ketebalan
     lv_obj_set_style_arc_width(
         speedArc,
-        12,
+        10,
         LV_PART_MAIN
     );
 
     lv_obj_set_style_arc_width(
         speedArc,
-        12,
+        10,
         LV_PART_INDICATOR
     );
 
 
-
-    // =========================
+    // =====================
     // BATTERY BAR
-    // =========================
+    // =====================
 
     batteryBar = lv_bar_create(
         lv_screen_active()
@@ -283,15 +285,15 @@ void create_dashboard()
 
     lv_obj_set_size(
         batteryBar,
-        150,
-        12
+        120,
+        10
     );
 
     lv_obj_align(
         batteryBar,
         LV_ALIGN_BOTTOM_MID,
         0,
-        -18
+        -30
     );
 
     lv_bar_set_range(
@@ -306,7 +308,6 @@ void create_dashboard()
         LV_ANIM_OFF
     );
 
-    // style battery
     lv_obj_set_style_bg_color(
         batteryBar,
         lv_color_hex(0x222222),
@@ -318,18 +319,12 @@ void create_dashboard()
         lv_color_hex(0x00FF88),
         LV_PART_INDICATOR
     );
-
-    lv_obj_set_style_radius(
-        batteryBar,
-        LV_RADIUS_CIRCLE,
-        0
-    );
 }
 
 
-// =======================
+// =========================
 // SETUP
-// =======================
+// =========================
 
 void setup()
 {
@@ -337,17 +332,17 @@ void setup()
 
     tft.init();
 
-    // landscape benar
-    tft.setRotation(1);
+    // ROTATION PALING STABIL
+    tft.setRotation(3);
 
     tft.setBrightness(255);
 
     lv_init();
 
-    // landscape 320x172
+    // ukuran portrait asli panel
     display = lv_display_create(
-        320,
-        172
+        172,
+        320
     );
 
     lv_display_set_flush_cb(
@@ -367,9 +362,9 @@ void setup()
 }
 
 
-// =======================
+// =========================
 // LOOP
-// =======================
+// =========================
 
 void loop()
 {
