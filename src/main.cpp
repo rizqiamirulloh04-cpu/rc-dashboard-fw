@@ -43,14 +43,14 @@ public:
             cfg.pin_rst          = 21;
             cfg.pin_busy         = -1;
 
-            cfg.memory_width     = 172;
-            cfg.memory_height    = 320;
+            cfg.memory_width     = 320;
+            cfg.memory_height    = 172;
 
-            cfg.panel_width      = 172;
-            cfg.panel_height     = 320;
+            cfg.panel_width      = 320;
+            cfg.panel_height     = 172;
 
-            cfg.offset_x         = 34;
-            cfg.offset_y         = 0;
+            cfg.offset_x         = 0;
+            cfg.offset_y         = 34;
             cfg.offset_rotation  = 0;
 
             cfg.dummy_read_pixel = 8;
@@ -93,10 +93,13 @@ static void flush_cb(lv_display_t *disp,
     uint32_t w = area->x2 - area->x1 + 1;
     uint32_t h = area->y2 - area->y1 + 1;
 
-    tft.startWrite();
-    tft.setAddrWindow(area->x1, area->y1, w, h);
-    tft.writePixels((uint16_t *)px_map, w * h);
-    tft.endWrite();
+    tft.pushImageDMA(
+        area->x1,
+        area->y1,
+        w,
+        h,
+        (uint16_t*)px_map
+    );
 
     lv_display_flush_ready(disp);
 }
@@ -133,8 +136,8 @@ void create_dashboard()
     lv_bar_set_value(batteryBar, 100, LV_ANIM_OFF);
 
     steeringArc = lv_arc_create(lv_screen_active());
-    lv_obj_set_size(steeringArc, 120, 120);
-    lv_obj_align(steeringArc, LV_ALIGN_CENTER, 0, 60);
+    lv_obj_set_size(steeringArc, 140, 140);
+    lv_obj_align(steeringArc, LV_ALIGN_CENTER, 0, 20);
 
     lv_arc_set_range(steeringArc, -100, 100);
     lv_arc_set_value(steeringArc, 0);
@@ -161,7 +164,7 @@ void setup()
     tft.init();
 
     // Landscape
-    tft.setRotation(1);
+    tft.setRotation(3);
 
     tft.setBrightness(255);
 
