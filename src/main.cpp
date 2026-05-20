@@ -1,6 +1,5 @@
-#include <Arduino.h>
+#include <LovyanGFX.hpp>
 #include <lvgl.h>
-#include <TFT_eSPI.h>
 
 // ===========================
 // Ukuran LCD Waveshare
