@@ -1,6 +1,8 @@
 #define USER_SETUP_INFO "Waveshare ESP32-C6 LCD 1.47"
 
 #define ST7789_DRIVER
+#define TFT_RGB_ORDER TFT_RGB
+#define TFT_INVERSION_ON
 
 #define TFT_WIDTH  172
 #define TFT_HEIGHT 320
@@ -23,3 +25,8 @@
 #define LOAD_FONT8
 #define LOAD_GFXFF
 #define SMOOTH_FONT
+
+#define TFT_NOP     0x00
+#define TFT_SWRST   0x01
+#define TFT_INVON   0x21
+#define TFT_INVOFF  0x20
