@@ -1,5 +1,3 @@
-// src/main.cpp
-
 #include <Arduino.h>
 #include <lvgl.h>
 #include <LovyanGFX.hpp>
@@ -13,9 +11,6 @@ class LGFX : public lgfx::LGFX_Device
 public:
     LGFX(void)
     {
-        // =========================
-        // SPI BUS
-        // =========================
         {
             auto cfg = _bus.config();
 
@@ -36,62 +31,45 @@ public:
             cfg.pin_dc   = 15;
 
             _bus.config(cfg);
-
             _panel.setBus(&_bus);
         }
 
-        // =========================
-        // PANEL
-        // =========================
         {
             auto cfg = _panel.config();
 
-            cfg.pin_cs   = 14;
-            cfg.pin_rst  = 21;
-            cfg.pin_busy = -1;
+            cfg.pin_cs           = 14;
+            cfg.pin_rst          = 21;
+            cfg.pin_busy         = -1;
 
-            cfg.memory_width  = 172;
-            cfg.memory_height = 320;
+            cfg.memory_width     = 172;
+            cfg.memory_height    = 320;
 
-            cfg.panel_width  = 172;
-            cfg.panel_height = 320;
+            cfg.panel_width      = 172;
+            cfg.panel_height     = 320;
 
-            cfg.offset_x = 34;
-            cfg.offset_y = 0;
+            cfg.offset_x         = 34;
+            cfg.offset_y         = 0;
+            cfg.offset_rotation  = 0;
 
-            cfg.offset_rotation = 0;
+            cfg.readable         = false;
+            cfg.invert           = true;
+            cfg.rgb_order        = false;
 
-            cfg.dummy_read_pixel = 8;
-            cfg.dummy_read_bits  = 1;
-
-            cfg.readable = false;
-
-            cfg.invert = true;
-            cfg.rgb_order = false;
-
-            cfg.dlen_16bit = false;
-
-            cfg.bus_shared = true;
+            cfg.dlen_16bit       = false;
+            cfg.bus_shared       = true;
 
             _panel.config(cfg);
         }
 
-        // =========================
-        // BACKLIGHT
-        // =========================
         {
             auto cfg = _light.config();
 
             cfg.pin_bl = 22;
-
             cfg.invert = false;
-
-            cfg.freq = 44100;
-
+            cfg.freq   = 44100;
             cfg.pwm_channel = 7;
 
             _light.config(cfg);
-
             _panel.setLight(&_light);
         }
 
@@ -102,19 +80,11 @@ public:
 LGFX tft;
 
 static lv_display_t *display;
+static lv_color_t buf1[320 * 20];
 
-// buffer
-static lv_color_t buf1[172 * 20];
-
-
-// =========================
-// FLUSH CALLBACK
-// =========================
-
-static void flush_cb(
-    lv_display_t *disp,
-    const lv_area_t *area,
-    uint8_t *px_map)
+static void flush_cb(lv_display_t *disp,
+                     const lv_area_t *area,
+                     uint8_t *px_map)
 {
     uint32_t w = area->x2 - area->x1 + 1;
     uint32_t h = area->y2 - area->y1 + 1;
@@ -129,7 +99,7 @@ static void flush_cb(
     );
 
     tft.writePixels(
-        (uint16_t *)px_map,
+        (lgfx::rgb565_t *)px_map,
         w * h
     );
 
@@ -138,48 +108,20 @@ static void flush_cb(
     lv_display_flush_ready(disp);
 }
 
-
-// =========================
-// UI OBJECT
-// =========================
-
 lv_obj_t *speedLabel;
-lv_obj_t *speedArc;
-lv_obj_t *batteryBar;
-
-
-// =========================
-// DASHBOARD UI
-// =========================
+lv_obj_t *arc;
 
 void create_dashboard()
 {
-    // background
     lv_obj_set_style_bg_color(
         lv_screen_active(),
-        lv_color_hex(0x050816),
+        lv_color_hex(0x101010),
         0
     );
 
-    lv_obj_set_style_bg_opa(
-        lv_screen_active(),
-        LV_OPA_COVER,
-        0
-    );
+    speedLabel = lv_label_create(lv_screen_active());
 
-
-    // =====================
-    // SPEED TEXT
-    // =====================
-
-    speedLabel = lv_label_create(
-        lv_screen_active()
-    );
-
-    lv_label_set_text(
-        speedLabel,
-        "0 KM/H"
-    );
+    lv_label_set_text(speedLabel, "0 KM/H");
 
     lv_obj_set_style_text_color(
         speedLabel,
@@ -197,134 +139,54 @@ void create_dashboard()
         speedLabel,
         LV_ALIGN_TOP_MID,
         0,
-        30
+        10
     );
 
+    arc = lv_arc_create(lv_screen_active());
 
-    // =====================
-    // ARC
-    // =====================
-
-    speedArc = lv_arc_create(
-        lv_screen_active()
-    );
-
-    lv_obj_set_size(
-        speedArc,
-        100,
-        100
-    );
+    lv_obj_set_size(arc, 110, 110);
 
     lv_obj_align(
-        speedArc,
+        arc,
         LV_ALIGN_CENTER,
         0,
-        -10
+        15
     );
 
+    lv_arc_set_range(arc, 0, 120);
+
+    lv_arc_set_value(arc, 0);
+
     lv_obj_remove_style(
-        speedArc,
+        arc,
         NULL,
         LV_PART_KNOB
     );
 
-    lv_arc_set_rotation(
-        speedArc,
-        135
-    );
-
-    lv_arc_set_bg_angles(
-        speedArc,
-        0,
-        270
-    );
-
-    lv_arc_set_range(
-        speedArc,
-        0,
-        120
-    );
-
-    lv_arc_set_value(
-        speedArc,
-        0
-    );
-
-    lv_obj_set_style_arc_color(
-        speedArc,
-        lv_color_hex(0x222222),
+    lv_obj_set_style_arc_width(
+        arc,
+        10,
         LV_PART_MAIN
     );
 
+    lv_obj_set_style_arc_width(
+        arc,
+        10,
+        LV_PART_INDICATOR
+    );
+
     lv_obj_set_style_arc_color(
-        speedArc,
+        arc,
         lv_color_hex(0x00E5FF),
         LV_PART_INDICATOR
     );
 
-    lv_obj_set_style_arc_width(
-        speedArc,
-        10,
+    lv_obj_set_style_arc_color(
+        arc,
+        lv_color_hex(0x303030),
         LV_PART_MAIN
-    );
-
-    lv_obj_set_style_arc_width(
-        speedArc,
-        10,
-        LV_PART_INDICATOR
-    );
-
-
-    // =====================
-    // BATTERY BAR
-    // =====================
-
-    batteryBar = lv_bar_create(
-        lv_screen_active()
-    );
-
-    lv_obj_set_size(
-        batteryBar,
-        120,
-        10
-    );
-
-    lv_obj_align(
-        batteryBar,
-        LV_ALIGN_BOTTOM_MID,
-        0,
-        -30
-    );
-
-    lv_bar_set_range(
-        batteryBar,
-        0,
-        100
-    );
-
-    lv_bar_set_value(
-        batteryBar,
-        100,
-        LV_ANIM_OFF
-    );
-
-    lv_obj_set_style_bg_color(
-        batteryBar,
-        lv_color_hex(0x222222),
-        LV_PART_MAIN
-    );
-
-    lv_obj_set_style_bg_color(
-        batteryBar,
-        lv_color_hex(0x00FF88),
-        LV_PART_INDICATOR
     );
 }
-
-
-// =========================
-// SETUP
-// =========================
 
 void setup()
 {
@@ -332,18 +194,15 @@ void setup()
 
     tft.init();
 
-    // ROTATION PALING STABIL
-    tft.setRotation(3);
+    // Landscape BENAR
+    tft.setRotation(1);
 
     tft.setBrightness(255);
 
     lv_init();
 
-    // ukuran portrait asli panel
-    display = lv_display_create(
-        172,
-        320
-    );
+    // ukuran landscape
+    display = lv_display_create(320, 172);
 
     lv_display_set_flush_cb(
         display,
@@ -361,64 +220,40 @@ void setup()
     create_dashboard();
 }
 
-
-// =========================
-// LOOP
-// =========================
-
 void loop()
 {
     lv_timer_handler();
 
-    delay(5);
-
     static uint32_t last = 0;
-
     static int speed = 0;
-
     static int dir = 1;
 
     if (millis() - last > 40)
     {
         last = millis();
 
-        speed += dir * 2;
+        speed += dir;
 
-        if (speed >= 120)
-        {
+        if(speed >= 120)
             dir = -1;
-        }
 
-        if (speed <= 0)
-        {
+        if(speed <= 0)
             dir = 1;
-        }
 
-        // update text
-        char buf[32];
+        char txt[32];
 
-        sprintf(
-            buf,
-            "%d KM/H",
-            speed
-        );
+        sprintf(txt, "%d KM/H", speed);
 
         lv_label_set_text(
             speedLabel,
-            buf
+            txt
         );
 
-        // update arc
         lv_arc_set_value(
-            speedArc,
+            arc,
             speed
         );
-
-        // update battery
-        lv_bar_set_value(
-            batteryBar,
-            100 - (speed / 2),
-            LV_ANIM_ON
-        );
     }
+
+    delay(5);
 }
