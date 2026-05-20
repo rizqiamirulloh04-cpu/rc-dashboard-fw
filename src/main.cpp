@@ -43,14 +43,14 @@ public:
             cfg.pin_rst          = 21;
             cfg.pin_busy         = -1;
 
-            cfg.memory_width     = 320;
-            cfg.memory_height    = 172;
+            cfg.memory_width     = 172;
+            cfg.memory_height    = 320;
 
-            cfg.panel_width      = 320;
-            cfg.panel_height     = 172;
+            cfg.panel_width      = 172;
+            cfg.panel_height     = 320;
 
-            cfg.offset_x         = 0;
-            cfg.offset_y         = 34;
+            cfg.offset_x         = 34;
+            cfg.offset_y         = 0;
             cfg.offset_rotation  = 0;
 
             cfg.dummy_read_pixel = 8;
@@ -164,7 +164,7 @@ void setup()
     tft.init();
 
     // Landscape
-    tft.setRotation(3);
+    tft.setRotation(1);
 
     tft.setBrightness(255);
 
