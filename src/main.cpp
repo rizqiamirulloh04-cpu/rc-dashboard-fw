@@ -16,8 +16,13 @@ public:
 
             cfg.spi_host = SPI2_HOST;
             cfg.spi_mode = 0;
-            cfg.freq_write = 40000000;
-            cfg.freq_read = 16000000;
+
+            cfg.freq_write = 80000000;
+            cfg.freq_read  = 20000000;
+
+            cfg.spi_3wire = true;
+            cfg.use_lock = true;
+            cfg.dma_channel = SPI_DMA_CH_AUTO;
 
             cfg.pin_sclk = 6;
             cfg.pin_mosi = 7;
@@ -45,14 +50,11 @@ public:
             cfg.offset_y         = 0;
             cfg.offset_rotation  = 0;
 
-            cfg.dummy_read_pixel = 8;
-            cfg.dummy_read_bits  = 1;
-
             cfg.readable         = false;
             cfg.invert           = true;
             cfg.rgb_order        = false;
             cfg.dlen_16bit       = false;
-            cfg.bus_shared       = true;
+            cfg.bus_shared       = false;
 
             _panel.config(cfg);
         }
@@ -62,7 +64,7 @@ public:
 
             cfg.pin_bl = 22;
             cfg.invert = false;
-            cfg.freq   = 44100;
+            cfg.freq = 44100;
             cfg.pwm_channel = 7;
 
             _light.config(cfg);
@@ -75,14 +77,6 @@ public:
 
 LGFX tft;
 
-void drawBar(int value)
-{
-    int barWidth = map(value, 0, 120, 0, 240);
-
-    tft.drawRoundRect(40, 110, 240, 20, 10, TFT_WHITE);
-    tft.fillRoundRect(40, 110, barWidth, 20, 10, TFT_GREEN);
-}
-
 void setup()
 {
     tft.init();
@@ -92,47 +86,19 @@ void setup()
     tft.setBrightness(255);
 
     tft.fillScreen(TFT_BLACK);
+
+    tft.setTextColor(TFT_CYAN);
+    tft.setTextSize(3);
+
+    tft.drawCentreString("WAVESHARE", 160, 30, 2);
+
+    tft.setTextColor(TFT_WHITE);
+
+    tft.drawCentreString("ESP32-C6", 160, 70, 2);
+
+    tft.fillRoundRect(30, 120, 260, 20, 10, TFT_GREEN);
 }
 
 void loop()
 {
-    static int speed = 0;
-
-    tft.fillScreen(TFT_BLACK);
-
-    // Header
-    tft.fillRoundRect(0, 0, 320, 35, 0, TFT_DARKCYAN);
-
-    tft.setTextColor(TFT_WHITE, TFT_DARKCYAN);
-    tft.setTextSize(2);
-
-    tft.drawCentreString("RC DASHBOARD", 160, 10, 2);
-
-    // Speed angka besar
-    tft.setTextColor(TFT_CYAN, TFT_BLACK);
-    tft.setTextSize(6);
-
-    tft.drawCentreString(String(speed), 120, 45, 4);
-
-    // KM/H
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setTextSize(2);
-
-    tft.drawString("KM/H", 220, 80, 2);
-
-    // Speed bar
-    drawBar(speed);
-
-    // Status
-    tft.setTextColor(TFT_GREEN, TFT_BLACK);
-    tft.drawCentreString("READY", 160, 145, 2);
-
-    speed++;
-
-    if(speed > 120)
-    {
-        speed = 0;
-    }
-
-    delay(40);
 }
