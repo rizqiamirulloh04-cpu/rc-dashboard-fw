@@ -88,8 +88,6 @@ LGFX tft;
 // ================= LVGL =================
 
 static lv_display_t* display;
-
-// buffer landscape
 static lv_color_t buf1[320 * 20];
 
 static void flush_cb(lv_display_t *disp,
@@ -126,40 +124,15 @@ lv_obj_t *steeringArc;
 
 void create_dashboard()
 {
-    // background
+    // Background
     lv_obj_set_style_bg_color(
         lv_screen_active(),
         lv_color_hex(0x000000),
         0
     );
 
-    // title
-    lv_obj_t *title = lv_label_create(
-        lv_screen_active()
-    );
+    // ================= SPEED TEXT =================
 
-    lv_label_set_text(title, "RC DASHBOARD");
-
-    lv_obj_set_style_text_color(
-        title,
-        lv_color_hex(0x00FFFF),
-        0
-    );
-
-    lv_obj_set_style_text_font(
-        title,
-        &lv_font_montserrat_20,
-        0
-    );
-
-    lv_obj_align(
-        title,
-        LV_ALIGN_TOP_MID,
-        0,
-        5
-    );
-
-    // speed text
     speedLabel = lv_label_create(
         lv_screen_active()
     );
@@ -177,7 +150,7 @@ void create_dashboard()
 
     lv_obj_set_style_text_font(
         speedLabel,
-        &lv_font_montserrat_32,
+        &lv_font_montserrat_30,
         0
     );
 
@@ -185,25 +158,26 @@ void create_dashboard()
         speedLabel,
         LV_ALIGN_TOP_MID,
         0,
-        40
+        10
     );
 
-    // arc speedometer
+    // ================= ARC =================
+
     steeringArc = lv_arc_create(
         lv_screen_active()
     );
 
     lv_obj_set_size(
         steeringArc,
-        140,
-        140
+        120,
+        120
     );
 
     lv_obj_align(
         steeringArc,
         LV_ALIGN_CENTER,
         0,
-        15
+        20
     );
 
     lv_arc_set_rotation(
@@ -236,19 +210,19 @@ void create_dashboard()
 
     lv_obj_set_style_arc_width(
         steeringArc,
-        12,
+        10,
         LV_PART_MAIN
     );
 
     lv_obj_set_style_arc_width(
         steeringArc,
-        12,
+        10,
         LV_PART_INDICATOR
     );
 
     lv_obj_set_style_arc_color(
         steeringArc,
-        lv_color_hex(0x333333),
+        lv_color_hex(0x222222),
         LV_PART_MAIN
     );
 
@@ -258,7 +232,8 @@ void create_dashboard()
         LV_PART_INDICATOR
     );
 
-    // battery
+    // ================= BATTERY =================
+
     batteryBar = lv_bar_create(
         lv_screen_active()
     );
@@ -266,7 +241,7 @@ void create_dashboard()
     lv_obj_set_size(
         batteryBar,
         180,
-        18
+        16
     );
 
     lv_obj_align(
@@ -297,15 +272,13 @@ void setup()
 
     tft.init();
 
-    // LANDSCAPE BENAR
+    // Landscape
     tft.setRotation(3);
 
     tft.setBrightness(255);
 
     lv_init();
 
-    // width = 320
-    // height = 172
     display = lv_display_create(
         320,
         172
