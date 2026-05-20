@@ -159,20 +159,26 @@ void setup()
     Serial.begin(115200);
 
     tft.init();
+
+    // Landscape
     tft.setRotation(1);
+
     tft.setBrightness(255);
 
     lv_init();
 
+    // width,height landscape
     display = lv_display_create(320, 172);
 
     lv_display_set_flush_cb(display, flush_cb);
 
-    lv_display_set_buffers(display,
-                           buf1,
-                           NULL,
-                           sizeof(buf1),
-                           LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(
+        display,
+        (void*)buf1,
+        NULL,
+        sizeof(buf1),
+        LV_DISPLAY_RENDER_MODE_PARTIAL
+    );
 
     create_dashboard();
 }
