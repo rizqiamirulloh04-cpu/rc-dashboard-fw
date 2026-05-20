@@ -84,7 +84,7 @@ public:
 LGFX tft;
 
 static lv_display_t* display;
-static lv_color_t buf1[172 * 20];
+static lv_color_t buf1[320 * 20];
 
 static void flush_cb(lv_display_t *disp,
                      const lv_area_t *area,
