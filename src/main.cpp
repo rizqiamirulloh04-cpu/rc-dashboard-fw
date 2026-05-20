@@ -90,28 +90,40 @@ void loop()
 {
     static int speed = 0;
 
-    tft.fillScreen(0x0000);
+    // background
+    tft.fillScreen(TFT_BLACK);
 
-    // Header
-    tft.fillRect(0, 0, 320, 30, 0x001F);
+    // ukuran asli LCD
+    int w = tft.width();
+    int h = tft.height();
 
-    tft.setTextColor(TFT_WHITE);
+    // header
+    tft.fillRoundRect(0, 0, w, 36, 8, TFT_BLUE);
+
+    tft.setTextColor(TFT_WHITE, TFT_BLUE);
     tft.setTextSize(2);
-    tft.drawString("RC DASHBOARD", 60, 8);
+    tft.drawCentreString("RC DASHBOARD", w / 2, 10, 2);
 
-    // Speed besar
-    tft.setTextColor(TFT_CYAN);
-    tft.setTextSize(5);
+    // angka speed
+    tft.setTextColor(TFT_CYAN, TFT_BLACK);
+    tft.setTextSize(6);
 
-    tft.drawNumber(speed, 110, 60);
+    String spd = String(speed);
 
+    tft.drawCentreString(spd, w / 2, 70, 4);
+
+    // kmh
     tft.setTextSize(2);
-    tft.drawString("KM/H", 230, 95);
+    tft.drawCentreString("KM/H", w / 2, 135, 2);
 
-    // Bar bawah
-    tft.fillRect(20, 140, 280, 16, TFT_GREEN);
+    // progress bar
+    int barWidth = map(speed, 0, 120, 0, w - 40);
 
-    // Animasi speed
+    tft.drawRoundRect(20, h - 40, w - 40, 20, 10, TFT_WHITE);
+
+    tft.fillRoundRect(20, h - 40, barWidth, 20, 10, TFT_GREEN);
+
+    // animasi
     speed++;
 
     if(speed > 120)
@@ -121,3 +133,4 @@ void loop()
 
     delay(50);
 }
+   
