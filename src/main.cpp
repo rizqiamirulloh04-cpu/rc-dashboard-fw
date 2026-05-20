@@ -82,26 +82,42 @@ LGFX tft;
 void setup()
 {
     tft.init();
-
-    // Coba rotation 1
     tft.setRotation(1);
-
     tft.setBrightness(255);
-
-    tft.fillScreen(TFT_BLACK);
-
-    tft.setTextColor(TFT_WHITE);
-    tft.setTextSize(3);
-
-    tft.drawString("WAVESHARE", 40, 40);
-
-    tft.setTextColor(TFT_GREEN);
-
-    tft.drawString("ESP32-C6", 55, 90);
-
-    tft.fillRect(20, 140, 280, 20, TFT_BLUE);
 }
 
 void loop()
 {
+    static int speed = 0;
+
+    tft.fillScreen(0x0000);
+
+    // Header
+    tft.fillRect(0, 0, 320, 30, 0x001F);
+
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(2);
+    tft.drawString("RC DASHBOARD", 60, 8);
+
+    // Speed besar
+    tft.setTextColor(TFT_CYAN);
+    tft.setTextSize(5);
+
+    tft.drawNumber(speed, 110, 60);
+
+    tft.setTextSize(2);
+    tft.drawString("KM/H", 230, 95);
+
+    // Bar bawah
+    tft.fillRect(20, 140, 280, 16, TFT_GREEN);
+
+    // Animasi speed
+    speed++;
+
+    if(speed > 120)
+    {
+        speed = 0;
+    }
+
+    delay(50);
 }
