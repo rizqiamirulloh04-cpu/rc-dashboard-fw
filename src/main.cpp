@@ -1,5 +1,3 @@
-// src/main.cpp
-
 #include <Arduino.h>
 #include <lvgl.h>
 #include <LovyanGFX.hpp>
@@ -13,7 +11,7 @@ class LGFX : public lgfx::LGFX_Device
 public:
     LGFX(void)
     {
-        // SPI BUS
+        // SPI
         {
             auto cfg = _bus.config();
 
@@ -37,7 +35,7 @@ public:
             _panel.setBus(&_bus);
         }
 
-        // PANEL CONFIG
+        // PANEL
         {
             auto cfg = _panel.config();
 
@@ -45,21 +43,21 @@ public:
             cfg.pin_rst  = 21;
             cfg.pin_busy = -1;
 
-            // FIX WAVESHARE 1.47
-            cfg.memory_width  = 320;
-            cfg.memory_height = 172;
+            // ASLI WAVESHARE
+            cfg.memory_width  = 172;
+            cfg.memory_height = 320;
 
-            cfg.panel_width  = 320;
-            cfg.panel_height = 172;
+            cfg.panel_width  = 172;
+            cfg.panel_height = 320;
 
-            cfg.offset_x = 0;
-            cfg.offset_y = 34;
+            cfg.offset_x = 34;
+            cfg.offset_y = 0;
 
             cfg.offset_rotation = 0;
 
-            cfg.readable   = false;
-            cfg.invert     = true;
-            cfg.rgb_order  = false;
+            cfg.readable  = false;
+            cfg.invert    = true;
+            cfg.rgb_order = false;
 
             cfg.dlen_16bit = false;
             cfg.bus_shared = true;
@@ -89,12 +87,12 @@ LGFX tft;
 
 // LVGL
 static lv_display_t *display;
-static lv_color_t buf1[172 * 20];
+static lv_color_t draw_buf[320 * 20];
 
 lv_obj_t *speedLabel;
-lv_obj_t *speedArc;
+lv_obj_t *arc;
 
-// DISPLAY FLUSH
+// FLUSH
 static void flush_cb(lv_display_t *disp,
                      const lv_area_t *area,
                      uint8_t *px_map)
@@ -121,7 +119,6 @@ static void flush_cb(lv_display_t *disp,
     lv_display_flush_ready(disp);
 }
 
-// DASHBOARD UI
 void create_dashboard()
 {
     // Background
@@ -131,7 +128,7 @@ void create_dashboard()
         0
     );
 
-    // SPEED TEXT
+    // SPEED LABEL
     speedLabel = lv_label_create(
         lv_screen_active()
     );
@@ -157,75 +154,75 @@ void create_dashboard()
         speedLabel,
         LV_ALIGN_TOP_MID,
         0,
-        12
+        15
     );
 
-    // ARC SPEEDOMETER
-    speedArc = lv_arc_create(
+    // ARC
+    arc = lv_arc_create(
         lv_screen_active()
     );
 
     lv_obj_set_size(
-        speedArc,
-        120,
-        120
+        arc,
+        110,
+        110
     );
 
     lv_obj_align(
-        speedArc,
+        arc,
         LV_ALIGN_CENTER,
         0,
-        18
+        20
     );
 
     lv_arc_set_rotation(
-        speedArc,
+        arc,
         135
     );
 
     lv_arc_set_bg_angles(
-        speedArc,
+        arc,
         0,
         270
     );
 
     lv_arc_set_range(
-        speedArc,
+        arc,
         0,
         120
     );
 
     lv_arc_set_value(
-        speedArc,
+        arc,
         0
     );
 
     lv_obj_remove_style(
-        speedArc,
+        arc,
         NULL,
         LV_PART_KNOB
     );
 
     lv_obj_set_style_arc_width(
-        speedArc,
+        arc,
         10,
         LV_PART_MAIN
     );
 
     lv_obj_set_style_arc_width(
-        speedArc,
+        arc,
         10,
         LV_PART_INDICATOR
     );
 
     lv_obj_set_style_arc_color(
-        speedArc,
+        arc,
         lv_color_hex(0x303030),
         LV_PART_MAIN
     );
 
     lv_obj_set_style_arc_color(
-        speedArc,
+        arc,
         lv_color_hex(0x00E5FF),
         LV_PART_INDICATOR
     );
@@ -237,17 +234,17 @@ void setup()
 
     tft.init();
 
-    // FIX LANDSCAPE
-    tft.setRotation(3);
+    // LANDSCAPE
+    tft.setRotation(1);
 
     tft.setBrightness(255);
 
     lv_init();
 
-    // IMPORTANT
+    // LANDSCAPE LVGL
     display = lv_display_create(
-        172,
-        320
+        320,
+        172
     );
 
     lv_display_set_flush_cb(
@@ -257,9 +254,9 @@ void setup()
 
     lv_display_set_buffers(
         display,
-        buf1,
+        draw_buf,
         NULL,
-        sizeof(buf1),
+        sizeof(draw_buf),
         LV_DISPLAY_RENDER_MODE_PARTIAL
     );
 
@@ -300,7 +297,7 @@ void loop()
         );
 
         lv_arc_set_value(
-            speedArc,
+            arc,
             speed
         );
     }
