@@ -1,7 +1,4 @@
-// =====================================
-// WAVESHARE ESP32-C6 LCD 1.47"
-// RC DASHBOARD - FIXED VERSION
-// =====================================
+// src/main.cpp
 
 #include <Arduino.h>
 #include <lvgl.h>
@@ -59,9 +56,14 @@ public:
 
             cfg.offset_rotation = 0;
 
+            cfg.dummy_read_pixel = 8;
+            cfg.dummy_read_bits  = 1;
+
             cfg.readable   = false;
             cfg.invert     = true;
             cfg.rgb_order  = false;
+            cfg.dlen_16bit = false;
+
             cfg.bus_shared = true;
 
             _panel.config(cfg);
@@ -72,12 +74,15 @@ public:
             auto cfg = _light.config();
 
             cfg.pin_bl = 22;
+
             cfg.invert = false;
 
             cfg.freq = 44100;
+
             cfg.pwm_channel = 7;
 
             _light.config(cfg);
+
             _panel.setLight(&_light);
         }
 
@@ -87,20 +92,20 @@ public:
 
 LGFX tft;
 
-// =====================================
-// LVGL
-// =====================================
+static lv_display_t* display;
 
-static lv_display_t *display;
+// buffer kecil supaya ringan
 static lv_color_t buf1[320 * 20];
 
-// =====================================
-// FLUSH
-// =====================================
 
-static void flush_cb(lv_display_t *disp,
-                     const lv_area_t *area,
-                     uint8_t *px_map)
+// =======================
+// LVGL FLUSH
+// =======================
+
+static void flush_cb(
+    lv_display_t *disp,
+    const lv_area_t *area,
+    uint8_t *px_map)
 {
     uint32_t w = area->x2 - area->x1 + 1;
     uint32_t h = area->y2 - area->y1 + 1;
@@ -124,30 +129,38 @@ static void flush_cb(lv_display_t *disp,
     lv_display_flush_ready(disp);
 }
 
-// =====================================
-// UI OBJECTS
-// =====================================
+
+// =======================
+// UI OBJECT
+// =======================
 
 lv_obj_t *speedLabel;
+lv_obj_t *speedArc;
 lv_obj_t *batteryBar;
-lv_obj_t *steeringArc;
 
-// =====================================
-// DASHBOARD UI
-// =====================================
+
+// =======================
+// DASHBOARD
+// =======================
 
 void create_dashboard()
 {
-    // BLACK BACKGROUND
+    // background hitam
     lv_obj_set_style_bg_color(
         lv_screen_active(),
-        lv_color_hex(0x000000),
+        lv_color_hex(0x050816),
         0
     );
 
-    // =================================
+    lv_obj_set_style_bg_opa(
+        lv_screen_active(),
+        LV_OPA_COVER,
+        0
+    );
+
+    // =========================
     // SPEED TEXT
-    // =================================
+    // =========================
 
     speedLabel = lv_label_create(
         lv_screen_active()
@@ -164,91 +177,105 @@ void create_dashboard()
         0
     );
 
-    // IMPORTANT FIX
+    // gunakan font 20 supaya tidak error
     lv_obj_set_style_text_font(
         speedLabel,
         &lv_font_montserrat_20,
         0
     );
 
+    // posisi tengah atas
     lv_obj_align(
         speedLabel,
         LV_ALIGN_TOP_MID,
         0,
-        12
+        15
     );
 
-    // =================================
-    // ARC
-    // =================================
 
-    steeringArc = lv_arc_create(
+
+    // =========================
+    // ARC SPEEDOMETER
+    // =========================
+
+    speedArc = lv_arc_create(
         lv_screen_active()
     );
 
     lv_obj_set_size(
-        steeringArc,
-        100,
-        100
+        speedArc,
+        120,
+        120
     );
 
     lv_obj_align(
-        steeringArc,
+        speedArc,
         LV_ALIGN_CENTER,
         0,
         10
     );
 
-    lv_arc_set_range(
-        steeringArc,
-        -100,
-        100
-    );
-
-    lv_arc_set_value(
-        steeringArc,
-        0
-    );
-
-    lv_arc_set_bg_angles(
-        steeringArc,
-        135,
-        45
-    );
-
+    // hilangkan knob
     lv_obj_remove_style(
-        steeringArc,
+        speedArc,
         NULL,
         LV_PART_KNOB
     );
 
+    lv_arc_set_rotation(
+        speedArc,
+        135
+    );
+
+    lv_arc_set_bg_angles(
+        speedArc,
+        0,
+        270
+    );
+
+    lv_arc_set_range(
+        speedArc,
+        0,
+        120
+    );
+
+    lv_arc_set_value(
+        speedArc,
+        0
+    );
+
+    // warna background arc
+    lv_obj_set_style_arc_color(
+        speedArc,
+        lv_color_hex(0x222222),
+        LV_PART_MAIN
+    );
+
+    // warna indicator arc
+    lv_obj_set_style_arc_color(
+        speedArc,
+        lv_color_hex(0x00E5FF),
+        LV_PART_INDICATOR
+    );
+
+    // ketebalan
     lv_obj_set_style_arc_width(
-        steeringArc,
-        10,
+        speedArc,
+        12,
         LV_PART_MAIN
     );
 
     lv_obj_set_style_arc_width(
-        steeringArc,
-        10,
+        speedArc,
+        12,
         LV_PART_INDICATOR
     );
 
-    lv_obj_set_style_arc_color(
-        steeringArc,
-        lv_color_hex(0x333333),
-        LV_PART_MAIN
-    );
 
-    lv_obj_set_style_arc_color(
-        steeringArc,
-        lv_color_hex(0x00FFFF),
-        LV_PART_INDICATOR
-    );
 
-    // =================================
+    // =========================
     // BATTERY BAR
-    // =================================
+    // =========================
 
     batteryBar = lv_bar_create(
         lv_screen_active()
@@ -256,15 +283,15 @@ void create_dashboard()
 
     lv_obj_set_size(
         batteryBar,
-        120,
-        10
+        150,
+        12
     );
 
     lv_obj_align(
         batteryBar,
         LV_ALIGN_BOTTOM_MID,
         0,
-        -14
+        -18
     );
 
     lv_bar_set_range(
@@ -279,15 +306,16 @@ void create_dashboard()
         LV_ANIM_OFF
     );
 
+    // style battery
     lv_obj_set_style_bg_color(
         batteryBar,
-        lv_color_hex(0x333333),
+        lv_color_hex(0x222222),
         LV_PART_MAIN
     );
 
     lv_obj_set_style_bg_color(
         batteryBar,
-        lv_color_hex(0x00FF00),
+        lv_color_hex(0x00FF88),
         LV_PART_INDICATOR
     );
 
@@ -298,9 +326,10 @@ void create_dashboard()
     );
 }
 
-// =====================================
+
+// =======================
 // SETUP
-// =====================================
+// =======================
 
 void setup()
 {
@@ -308,14 +337,14 @@ void setup()
 
     tft.init();
 
-    // LANDSCAPE
+    // landscape benar
     tft.setRotation(1);
 
     tft.setBrightness(255);
 
     lv_init();
 
-    // LANDSCAPE RESOLUTION
+    // landscape 320x172
     display = lv_display_create(
         320,
         172
@@ -337,32 +366,40 @@ void setup()
     create_dashboard();
 }
 
-// =====================================
+
+// =======================
 // LOOP
-// =====================================
+// =======================
 
 void loop()
 {
-    static uint32_t last = 0;
-    static int speed = 0;
-    static int dir = 1;
-
     lv_timer_handler();
 
     delay(5);
 
-    if (millis() - last > 50)
+    static uint32_t last = 0;
+
+    static int speed = 0;
+
+    static int dir = 1;
+
+    if (millis() - last > 40)
     {
         last = millis();
 
         speed += dir * 2;
 
         if (speed >= 120)
+        {
             dir = -1;
+        }
 
         if (speed <= 0)
+        {
             dir = 1;
+        }
 
+        // update text
         char buf[32];
 
         sprintf(
@@ -376,15 +413,17 @@ void loop()
             buf
         );
 
+        // update arc
+        lv_arc_set_value(
+            speedArc,
+            speed
+        );
+
+        // update battery
         lv_bar_set_value(
             batteryBar,
             100 - (speed / 2),
             LV_ANIM_ON
-        );
-
-        lv_arc_set_value(
-            steeringArc,
-            speed - 60
         );
     }
 }
