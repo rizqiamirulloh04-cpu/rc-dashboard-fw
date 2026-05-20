@@ -58,7 +58,7 @@ LGFX tft;
 
 void drawDashboard(int speed)
 {
-  tft.fillScreen(TFT_DARKBLUE);
+  tft.fillScreen(TFT_BLUE);
 
   tft.fillRect(0, 0, 320, 80, TFT_BLUE);
 
