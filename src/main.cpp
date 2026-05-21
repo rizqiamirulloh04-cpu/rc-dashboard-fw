@@ -1,137 +1,90 @@
 #include <Arduino.h>
-#include <LovyanGFX.hpp>
 
-class LGFX : public lgfx::LGFX_Device
-{
-    lgfx::Panel_ST7789 _panel;
-    lgfx::Bus_SPI _bus;
-    lgfx::Light_PWM _light;
+#include <lvgl.h>
 
-public:
-
-    LGFX(void)
-    {
-        {
-            auto cfg = _bus.config();
-
-            cfg.spi_host = SPI2_HOST;
-            cfg.spi_mode = 0;
-            cfg.freq_write = 40000000;
-            cfg.freq_read  = 16000000;
-
-            cfg.pin_sclk = 6;
-            cfg.pin_mosi = 7;
-            cfg.pin_miso = -1;
-            cfg.pin_dc   = 15;
-
-            _bus.config(cfg);
-            _panel.setBus(&_bus);
-        }
-
-        {
-            auto cfg = _panel.config();
-
-            cfg.pin_cs           = 14;
-            cfg.pin_rst          = 21;
-            cfg.pin_busy         = -1;
-
-            cfg.memory_width     = 172;
-            cfg.memory_height    = 320;
-
-            cfg.panel_width      = 172;
-            cfg.panel_height     = 320;
-
-            cfg.offset_x         = 34;
-            cfg.offset_y         = 0;
-            cfg.offset_rotation  = 0;
-
-            cfg.dummy_read_pixel = 8;
-            cfg.dummy_read_bits  = 1;
-
-            cfg.readable         = false;
-            cfg.invert           = true;
-            cfg.rgb_order        = false;
-            cfg.dlen_16bit       = false;
-            cfg.bus_shared       = true;
-
-            _panel.config(cfg);
-        }
-
-        {
-            auto cfg = _light.config();
-
-            cfg.pin_bl = 22;
-            cfg.invert = false;
-            cfg.freq   = 44100;
-            cfg.pwm_channel = 7;
-
-            _light.config(cfg);
-            _panel.setLight(&_light);
-        }
-
-        setPanel(&_panel);
-    }
-};
+#include "LGFX_Config.h"
 
 LGFX tft;
 
+static lv_disp_draw_buf_t draw_buf;
+
+static lv_color_t buf1[172 * 20];
+
+void my_flush_cb(lv_disp_drv_t *disp,
+                 const lv_area_t *area,
+                 lv_color_t *color_p)
+{
+    uint32_t w = area->x2 - area->x1 + 1;
+    uint32_t h = area->y2 - area->y1 + 1;
+
+    tft.startWrite();
+
+    tft.setAddrWindow(area->x1,
+                      area->y1,
+                      w,
+                      h);
+
+    tft.writePixels((lgfx::rgb565_t *)&color_p->full,
+                    w * h);
+
+    tft.endWrite();
+
+    lv_disp_flush_ready(disp);
+}
+
 void setup()
 {
+    Serial.begin(115200);
+
+    lv_init();
+
     tft.init();
 
-    // PENTING
     tft.setRotation(1);
 
     tft.setBrightness(255);
 
-    // test warna
-    tft.fillScreen(TFT_BLUE);
+    lv_disp_draw_buf_init(&draw_buf,
+                          buf1,
+                          NULL,
+                          172 * 20);
 
-    delay(1000);
+    static lv_disp_drv_t disp_drv;
+
+    lv_disp_drv_init(&disp_drv);
+
+    disp_drv.hor_res = 320;
+    disp_drv.ver_res = 172;
+
+    disp_drv.flush_cb = my_flush_cb;
+
+    disp_drv.draw_buf = &draw_buf;
+
+    lv_disp_drv_register(&disp_drv);
+
+    lv_obj_set_style_bg_color(lv_scr_act(),
+                              lv_color_hex(0x101820),
+                              0);
+
+    lv_obj_t *label = lv_label_create(lv_scr_act());
+
+    lv_label_set_text(label,
+                      "RC DASHBOARD");
+
+    lv_obj_set_style_text_color(label,
+                                lv_color_white(),
+                                0);
+
+    lv_obj_set_style_text_font(label,
+                               &lv_font_montserrat_28,
+                               0);
+
+    lv_obj_center(label);
 }
 
 void loop()
 {
-    static int speed = 0;
+    lv_timer_handler();
 
-    tft.fillScreen(TFT_NAVY);
-
-    // Header
-    tft.fillRoundRect(0, 0, 320, 35, 0, TFT_DARKCYAN);
-
-    tft.setTextColor(TFT_WHITE, TFT_DARKCYAN);
-    tft.setTextSize(2);
-
-    tft.setCursor(70, 10);
-    tft.print("RC DASH");
-
-    // SPEED
-    tft.setTextColor(TFT_CYAN, TFT_NAVY);
-    tft.setTextSize(6);
-
-    tft.setCursor(70, 70);
-    tft.print(speed);
-
-    // KMH
-    tft.setTextSize(2);
-
-    tft.setCursor(230, 95);
-    tft.print("KM/H");
-
-    // BAR
-    tft.drawRoundRect(20, 145, 280, 20, 8, TFT_WHITE);
-
-    int barWidth = map(speed, 0, 120, 0, 276);
-
-    tft.fillRoundRect(22, 147, barWidth, 16, 6, TFT_GREEN);
-
-    // animasi
-    speed++;
-
-    if (speed > 120)
-    {
-        speed = 0;
-    }
-
-    delay(50);
+    delay(5);
 }
