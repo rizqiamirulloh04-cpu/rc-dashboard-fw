@@ -1,40 +1,24 @@
 #include <Arduino.h>
-#include <lvgl.h>
+#include <SPI.h>
+#include <TFT_eSPI.h>
 
-void setup()
-{
-    Serial.begin(115200);
+TFT_eSPI tft = TFT_eSPI();
 
-    lv_init();
+void setup() {
+    pinMode(15, OUTPUT); // backlight
+    digitalWrite(15, HIGH);
 
-    // Background hitam
-    lv_obj_set_style_bg_color(
-        lv_scr_act(),
-        lv_color_hex(0x000000),
-        LV_PART_MAIN
-    );
+    tft.init();
+    tft.setRotation(1);
 
-    // Label
-    lv_obj_t *label = lv_label_create(lv_scr_act());
+    tft.fillScreen(TFT_BLACK);
 
-    lv_label_set_text(label, "RC DASHBOARD");
+    tft.setTextColor(TFT_CYAN);
+    tft.setTextSize(2);
 
-    lv_obj_set_style_text_color(
-        label,
-        lv_color_hex(0x00FFCC),
-        LV_PART_MAIN
-    );
-
-    lv_obj_align(
-        label,
-        LV_ALIGN_CENTER,
-        0,
-        0
-    );
+    tft.drawString("ESP32-C6 OK", 20, 40);
+    tft.drawString("Waveshare LCD", 20, 80);
 }
 
-void loop()
-{
-    lv_timer_handler();
-    delay(5);
+void loop() {
 }
