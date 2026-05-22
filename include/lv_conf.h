@@ -1,12 +1,30 @@
 #ifndef LV_CONF_H
 #define LV_CONF_H
 
-#define LV_USE_LOG 0
+#define LV_USE_OS 0
 
 #define LV_COLOR_DEPTH 16
 
-#define LV_USE_LABEL 1
+#define LV_MEM_SIZE (64U * 1024U)
 
-#define LV_FONT_MONTSERRAT_14 1
+#define LV_USE_LOG 0
+
+#define LV_USE_DRAW_SW 1
+
+#define LV_USE_DRAW_SW_COMPLEX 1
+
+#define LV_USE_FONT_MONTSERRAT_12 1
+#define LV_USE_FONT_MONTSERRAT_14 1
+#define LV_USE_FONT_MONTSERRAT_16 1
+#define LV_USE_FONT_MONTSERRAT_20 1
+#define LV_USE_FONT_MONTSERRAT_28 1
+#define LV_USE_FONT_MONTSERRAT_36 1
+#define LV_USE_FONT_MONTSERRAT_48 1
+
+#define LV_USE_LABEL 1
+#define LV_USE_BAR 1
+#define LV_USE_ARC 1
+#define LV_USE_LINE 1
+#define LV_USE_IMG 1
 
 #endif
