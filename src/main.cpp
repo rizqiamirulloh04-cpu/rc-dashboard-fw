@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
 
+#define BLACK 0x0000
+#define CYAN  0x07FF
 #define TFT_BL 15
 
 Arduino_DataBus *bus = new Arduino_HWSPI(
@@ -27,14 +29,11 @@ void setup()
 
     gfx->begin();
 
-    gfx->fillScreen(BLACK);
-
-    gfx->setTextColor(CYAN);
+    gfx->fillScreen(0x0000); // BLACK
+    gfx->setTextColor(0x07FF); // CYAN
     gfx->setTextSize(2);
-
     gfx->setCursor(20, 40);
     gfx->println("ESP32-C6");
-
     gfx->setCursor(20, 80);
     gfx->println("LCD OK");
 }
