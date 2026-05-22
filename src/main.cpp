@@ -146,6 +146,9 @@ void setup()
 {
     Serial.begin(115200);
 
+    pinMode(TFT_BL, OUTPUT);
+    digitalWrite(TFT_BL, HIGH);
+
     gfx->begin();
     gfx->fillScreen(0x0000);
 
