@@ -1,27 +1,27 @@
 #include <Arduino.h>
+#include <SPI.h>
 #include <Arduino_GFX_Library.h>
 
 #define GFX_BL 15
 
 Arduino_DataBus *bus = new Arduino_ESP32SPI(
-    6,   // DC
-    7,   // CS
-    5,   // SCK
-    4,   // MOSI
-    GFX_NOT_DEFINED
+    8,   // DC
+    14,  // CS
+    6,   // SCK
+    7,   // MOSI
+    -1   // MISO
 );
 
 Arduino_GFX *gfx = new Arduino_ST7789(
     bus,
-    3,    // RST
-    3,    // rotation
+    21,   // RST
+    0,    // rotation
     true, // IPS
-    172,
-    320,
-    34,
-    0,
-    0,
-    0
+    172,  // width
+    320,  // height
+    34,   // col offset
+    0,    // row offset
+    35    // col offset2
 );
 
 void setup()
@@ -29,21 +29,20 @@ void setup()
     pinMode(GFX_BL, OUTPUT);
     digitalWrite(GFX_BL, HIGH);
 
-    Serial.begin(115200);
-
-    delay(200);
-
     gfx->begin();
 
-    gfx->fillScreen(0x0000);
+    gfx->fillScreen(BLACK);
+
+    gfx->setTextColor(WHITE);
+    gfx->setTextSize(2);
 
     gfx->setCursor(20, 40);
-    gfx->setTextColor(0xFFFF);
-    gfx->setTextSize(2);
-    gfx->println("Waveshare ESP32-C6");
+    gfx->println("ESP32-C6");
 
     gfx->setCursor(20, 80);
-    gfx->println("LCD OK");
+    gfx->println("LCD TEST");
+
+    gfx->drawRect(10, 10, 150, 100, RED);
 }
 
 void loop()
