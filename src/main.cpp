@@ -1,24 +1,44 @@
 #include <Arduino.h>
-#include <SPI.h>
-#include <TFT_eSPI.h>
+#include <Arduino_GFX_Library.h>
 
-TFT_eSPI tft = TFT_eSPI();
+#define TFT_BL 15
 
-void setup() {
-    pinMode(15, OUTPUT); // backlight
-    digitalWrite(15, HIGH);
+Arduino_DataBus *bus = new Arduino_HWSPI(
+    15 /* DC */,
+    14 /* CS */,
+    7  /* SCK */,
+    6  /* MOSI */,
+    GFX_NOT_DEFINED /* MISO */
+);
 
-    tft.init();
-    tft.setRotation(1);
+Arduino_GFX *gfx = new Arduino_ST7789(
+    bus,
+    21 /* RST */,
+    1  /* rotation */,
+    true /* IPS */,
+    172 /* width */,
+    320 /* height */
+);
 
-    tft.fillScreen(TFT_BLACK);
+void setup()
+{
+    pinMode(TFT_BL, OUTPUT);
+    digitalWrite(TFT_BL, HIGH);
 
-    tft.setTextColor(TFT_CYAN);
-    tft.setTextSize(2);
+    gfx->begin();
 
-    tft.drawString("ESP32-C6 OK", 20, 40);
-    tft.drawString("Waveshare LCD", 20, 80);
+    gfx->fillScreen(BLACK);
+
+    gfx->setTextColor(CYAN);
+    gfx->setTextSize(2);
+
+    gfx->setCursor(20, 40);
+    gfx->println("ESP32-C6");
+
+    gfx->setCursor(20, 80);
+    gfx->println("LCD OK");
 }
 
-void loop() {
+void loop()
+{
 }
