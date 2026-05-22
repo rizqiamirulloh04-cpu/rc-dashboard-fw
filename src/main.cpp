@@ -14,7 +14,7 @@ Arduino_DataBus *bus = new Arduino_ESP32SPI(
 Arduino_GFX *gfx = new Arduino_ST7789(
     bus,
     3,    // RST
-    2,    // rotation
+    3,    // rotation
     true, // IPS
     172,
     320,
