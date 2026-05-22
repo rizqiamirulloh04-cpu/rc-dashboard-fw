@@ -4,6 +4,7 @@
 
 #define GFX_BL 15
 
+// SPI LCD
 Arduino_DataBus *bus = new Arduino_ESP32SPI(
     8,   // DC
     14,  // CS
@@ -12,10 +13,11 @@ Arduino_DataBus *bus = new Arduino_ESP32SPI(
     -1   // MISO
 );
 
+// ST7789 LCD
 Arduino_GFX *gfx = new Arduino_ST7789(
     bus,
     21,   // RST
-    0,    // rotation
+    1,    // rotation
     true, // IPS
     172,  // width
     320,  // height
@@ -26,22 +28,31 @@ Arduino_GFX *gfx = new Arduino_ST7789(
 
 void setup()
 {
+    // Backlight ON
     pinMode(GFX_BL, OUTPUT);
     digitalWrite(GFX_BL, HIGH);
 
+    // Init display
     gfx->begin();
 
-    gfx->fillScreen(0x0000);     // BLACK
-    gfx->setTextColor(0xFFFF);   // WHITE
+    // Clear screen
+    gfx->fillScreen(0x0000);
+
+    // Text color
+    gfx->setTextColor(0xFFFF);
+
+    // Text size
     gfx->setTextSize(2);
 
+    // Draw text
     gfx->setCursor(20, 40);
     gfx->println("ESP32-C6");
 
     gfx->setCursor(20, 80);
     gfx->println("LCD TEST");
 
-    gfx->drawRect(10, 10, 150, 100, 0xF800); // RED);
+    // Red rectangle
+    gfx->drawRect(10, 10, 150, 100, 0xF800);
 }
 
 void loop()
