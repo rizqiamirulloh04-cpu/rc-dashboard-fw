@@ -150,6 +150,7 @@ void setup()
     digitalWrite(TFT_BL, HIGH);
 
     gfx->begin();
+    gfx->setRotation(1);
     gfx->fillScreen(0x0000);
 
     lv_init();
