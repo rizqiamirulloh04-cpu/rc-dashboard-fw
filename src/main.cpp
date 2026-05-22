@@ -31,9 +31,8 @@ void setup()
 
     gfx->begin();
 
-    gfx->fillScreen(BLACK);
-
-    gfx->setTextColor(WHITE);
+    gfx->fillScreen(0x0000);     // BLACK
+    gfx->setTextColor(0xFFFF);   // WHITE
     gfx->setTextSize(2);
 
     gfx->setCursor(20, 40);
@@ -42,7 +41,7 @@ void setup()
     gfx->setCursor(20, 80);
     gfx->println("LCD TEST");
 
-    gfx->drawRect(10, 10, 150, 100, RED);
+    gfx->drawRect(10, 10, 150, 100, 0xF800); // RED);
 }
 
 void loop()
