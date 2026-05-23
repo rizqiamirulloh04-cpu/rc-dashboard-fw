@@ -66,7 +66,7 @@ void setup()
     digitalWrite(TFT_BL, HIGH);
 
     gfx->begin();
-    gfx->fillScreen(BLACK);
+    gfx->fillScreen(0x0000);
 
     lv_init();
 
