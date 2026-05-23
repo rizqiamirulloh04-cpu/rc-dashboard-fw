@@ -1,76 +1,30 @@
 #include <Arduino.h>
-#include <Arduino_GFX_Library.h>
+#include "LGFX_Config.h"
 
-// ==========================
-// ESP32-C6-LCD-1.47
-// ==========================
-
-#define TFT_BL   15
-
-#define TFT_SCLK 6
-#define TFT_MOSI 7
-#define TFT_DC   15
-#define TFT_CS   14
-#define TFT_RST  21
-
-#define BLACK 0x0000
-#define WHITE 0xFFFF
-#define RED   0xF800
-#define GREEN 0x07E0
-#define BLUE  0x001F
-
-Arduino_DataBus *bus = new Arduino_ESP32SPI(
-    TFT_DC,
-    TFT_CS,
-    TFT_SCLK,
-    TFT_MOSI,
-    GFX_NOT_DEFINED
-);
-
-Arduino_GFX *gfx = new Arduino_ST7789(
-    bus,
-    TFT_RST,
-    0,
-    true,
-    172,
-    320,
-    34,
-    0,
-    35,
-    0
-);
+LGFX tft;
 
 void setup()
 {
-    Serial.begin(115200);
+    tft.init();
 
-    pinMode(TFT_BL, OUTPUT);
-    digitalWrite(TFT_BL, HIGH);
+    tft.setRotation(1);
 
-    delay(200);
+    tft.fillScreen(TFT_RED);
+    delay(1000);
 
-    gfx->begin();
+    tft.fillScreen(TFT_GREEN);
+    delay(1000);
 
-    gfx->setRotation(3);
+    tft.fillScreen(TFT_BLUE);
+    delay(1000);
 
-    gfx->invertDisplay(false);
+    tft.fillScreen(TFT_BLACK);
 
-    gfx->fillScreen(BLACK);
+    tft.setTextColor(TFT_WHITE);
 
-    gfx->setTextColor(WHITE);
-    gfx->setTextSize(3);
+    tft.setTextSize(2);
 
-    gfx->setCursor(20, 40);
-    gfx->println("ESP32-C6");
-
-    gfx->setTextColor(GREEN);
-
-    gfx->setCursor(20, 100);
-    gfx->println("LCD OK");
-
-    gfx->fillRect(20, 160, 120, 40, RED);
-
-    gfx->fillCircle(250, 90, 30, BLUE);
+    tft.drawString("LCD OK", 30, 100);
 }
 
 void loop()
