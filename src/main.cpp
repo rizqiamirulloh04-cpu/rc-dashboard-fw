@@ -33,9 +33,13 @@ Arduino_GFX *gfx = new Arduino_ST7789(
     bus,
     TFT_RST,
     0,
-    true,
+    false,
     172,
-    320
+    320,
+    34,
+    0,
+    0,
+    0
 );
 
 void setup()
@@ -49,7 +53,7 @@ void setup()
     gfx->begin();
 
     // Rotation
-    gfx->setRotation(1);
+    gfx->setRotation(3);
 
     // Test warna
     gfx->fillScreen(BLACK);
