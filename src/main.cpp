@@ -51,7 +51,7 @@ void setup()
 
     gfx->begin();
 
-    gfx->setRotation(1);
+    gfx->setRotation(3);
 
     gfx->invertDisplay(false);
 
