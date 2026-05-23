@@ -7,16 +7,12 @@
 
 #define LV_USE_LOG 0
 
-#define LV_USE_PERF_MONITOR 1
+#define LV_USE_PERF_MONITOR 0
 
 #define LV_USE_LABEL 1
-#define LV_USE_BTN 1
 #define LV_USE_BAR 1
-#define LV_USE_ARC 1
+#define LV_USE_BTN 1
 
-#define LV_FONT_MONTSERRAT_12 1
-#define LV_FONT_MONTSERRAT_16 1
-#define LV_FONT_MONTSERRAT_20 1
-#define LV_FONT_MONTSERRAT_28 1
+#define LV_FONT_MONTSERRAT_22 1
 
 #endif
