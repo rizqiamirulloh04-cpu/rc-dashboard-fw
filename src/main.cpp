@@ -63,7 +63,7 @@ void setup()
 
     gfx->setRotation(1);
 
-    gfx->fillScreen(BLACK);
+    gfx->fillScreen(0x0000);
 
     delay(1000);
 
