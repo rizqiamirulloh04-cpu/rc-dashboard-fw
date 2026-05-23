@@ -61,11 +61,25 @@ void setup()
 
     gfx->begin();
 
+    gfx->invertDisplay(true);
+
     gfx->setRotation(1);
 
-    gfx->fillScreen(0x0000);
-
+    // TEST WARNA
+    gfx->fillScreen(0xF800); // merah
     delay(1000);
+
+    gfx->fillScreen(0x07E0); // hijau
+    delay(1000);
+
+    gfx->fillScreen(0x001F); // biru
+    delay(1000);
+
+    gfx->fillScreen(0x0000); // hitam
+
+    // ======================
+    // LVGL
+    // ======================
 
     lv_init();
 
