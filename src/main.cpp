@@ -1,12 +1,16 @@
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
 
-#define TFT_BL 15
+// ==========================
+// ESP32-C6-LCD-1.47
+// ==========================
 
-#define TFT_MOSI 6
-#define TFT_SCLK 7
-#define TFT_CS   14
+#define TFT_BL   15
+
+#define TFT_SCLK 6
+#define TFT_MOSI 7
 #define TFT_DC   15
+#define TFT_CS   14
 #define TFT_RST  21
 
 #define BLACK 0x0000
@@ -43,10 +47,13 @@ void setup()
     pinMode(TFT_BL, OUTPUT);
     digitalWrite(TFT_BL, HIGH);
 
+    delay(200);
+
     gfx->begin();
 
     gfx->setRotation(1);
-    gfx->invertDisplay(true);
+
+    gfx->invertDisplay(false);
 
     gfx->fillScreen(BLACK);
 
@@ -54,17 +61,16 @@ void setup()
     gfx->setTextSize(3);
 
     gfx->setCursor(20, 40);
-    gfx->println("WAVESHARE");
+    gfx->println("ESP32-C6");
 
     gfx->setTextColor(GREEN);
 
-    gfx->setCursor(20, 90);
-    gfx->println("ESP32-C6");
-
-    gfx->setTextColor(BLUE);
-
-    gfx->setCursor(20, 140);
+    gfx->setCursor(20, 100);
     gfx->println("LCD OK");
+
+    gfx->fillRect(20, 160, 120, 40, RED);
+
+    gfx->fillCircle(250, 90, 30, BLUE);
 }
 
 void loop()
