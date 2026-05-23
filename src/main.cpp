@@ -1,59 +1,55 @@
 #include <Arduino.h>
 #include <SPI.h>
-#include <Arduino_GFX_Library.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7789.h>
 
-#define TFT_BL 8
+// Pin Waveshare ESP32-C6 LCD 1.47
+#define TFT_MOSI 6
+#define TFT_SCLK 7
+#define TFT_CS   14
+#define TFT_DC   15
+#define TFT_RST  21
+#define TFT_BL   22
 
-Arduino_DataBus *bus = new Arduino_ESP32SPI(
-    4,   // DC
-    5,   // CS
-    6,   // SCK
-    7,   // MOSI
-    -1
-);
+Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
-Arduino_GFX *gfx = new Arduino_ST7789(
-    bus,
-    21,   // RST
-    0,
-    true,
-    172,
-    320,
-    34,
-    0,
-    0,
-    0
-);
-
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     pinMode(TFT_BL, OUTPUT);
     digitalWrite(TFT_BL, HIGH);
 
-    gfx->begin();
+    SPI.begin(TFT_SCLK, -1, TFT_MOSI, TFT_CS);
 
-    gfx->setRotation(1);
+    tft.init(172, 320);
 
-    gfx->fillScreen(0xF800);
+    // Coba orientasi berbeda
+    tft.setRotation(1);
+
+    // Inversi warna kadang wajib di board waveshare
+    tft.invertDisplay(true);
+
+    // Test layar
+    tft.fillScreen(ST77XX_RED);
     delay(1000);
 
-    gfx->fillScreen(0x07E0);
+    tft.fillScreen(ST77XX_GREEN);
     delay(1000);
 
-    gfx->fillScreen(0x001F);
+    tft.fillScreen(ST77XX_BLUE);
     delay(1000);
 
-    gfx->fillScreen(0x0000);
+    tft.fillScreen(ST77XX_BLACK);
 
-    gfx->setTextColor(0xFFFF);
-    gfx->setTextSize(3);
+    tft.setCursor(20, 80);
+    tft.setTextColor(ST77XX_WHITE);
+    tft.setTextSize(3);
+    tft.println("ESP32-C6");
 
-    gfx->setCursor(20, 100);
-    gfx->println("LCD OK");
+    tft.setCursor(20, 130);
+    tft.setTextSize(2);
+    tft.println("LCD OK");
 }
 
-void loop()
-{
+void loop() {
 }
