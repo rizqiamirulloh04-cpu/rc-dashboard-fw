@@ -14,6 +14,7 @@ public:
 
     LGFX(void)
     {
+        // SPI BUS
         {
             auto cfg = _bus.config();
 
@@ -44,6 +45,7 @@ public:
             _panel.setBus(&_bus);
         }
 
+        // PANEL
         {
             auto cfg = _panel.config();
 
@@ -80,6 +82,7 @@ public:
             _panel.config(cfg);
         }
 
+        // BACKLIGHT
         {
             auto cfg = _light.config();
 
