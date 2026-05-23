@@ -1,66 +1,115 @@
 #include <Arduino.h>
 #include <SPI.h>
-#include <Arduino_GFX_Library.h>
 
-#define GFX_BL 22
+#define LCD_SCK  6
+#define LCD_MOSI 7
+#define LCD_CS   14
+#define LCD_DC   15
+#define LCD_RST  21
+#define LCD_BL   22
 
-// SPI LCD
-Arduino_DataBus *bus = new Arduino_ESP32SPI(
-    15, // DC
-    14, // CS
-    6,  // SCK
-    7,  // MOSI
-    -1  // MISO
-);
+SPIClass spi(FSPI);
 
-// Driver LCD
-Arduino_GFX *gfx = new Arduino_ST7789(
-    bus,
-    21,   // RST
-    0,    // rotation
-    true, // IPS
-    172,  // width
-    320,  // height
-    34,   // col offset
-    0,    // row offset
-    0,
-    0
-);
+void writeCmd(uint8_t cmd)
+{
+    digitalWrite(LCD_DC, LOW);
+    digitalWrite(LCD_CS, LOW);
+    spi.transfer(cmd);
+    digitalWrite(LCD_CS, HIGH);
+}
+
+void writeData(uint8_t data)
+{
+    digitalWrite(LCD_DC, HIGH);
+    digitalWrite(LCD_CS, LOW);
+    spi.transfer(data);
+    digitalWrite(LCD_CS, HIGH);
+}
+
+void lcdInit()
+{
+    digitalWrite(LCD_RST, LOW);
+    delay(100);
+
+    digitalWrite(LCD_RST, HIGH);
+    delay(100);
+
+    writeCmd(0x11);
+    delay(120);
+
+    writeCmd(0x36);
+    writeData(0x00);
+
+    writeCmd(0x3A);
+    writeData(0x05);
+
+    writeCmd(0x21);
+
+    writeCmd(0x29);
+    delay(20);
+}
+
+void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+{
+    writeCmd(0x2A);
+
+    writeData(x0 >> 8);
+    writeData(x0 & 0xFF);
+    writeData(x1 >> 8);
+    writeData(x1 & 0xFF);
+
+    writeCmd(0x2B);
+
+    writeData(y0 >> 8);
+    writeData(y0 & 0xFF);
+    writeData(y1 >> 8);
+    writeData(y1 & 0xFF);
+
+    writeCmd(0x2C);
+}
+
+void fillColor(uint16_t color)
+{
+    setAddrWindow(0, 0, 171, 319);
+
+    digitalWrite(LCD_DC, HIGH);
+    digitalWrite(LCD_CS, LOW);
+
+    for (uint32_t i = 0; i < 172UL * 320UL; i++)
+    {
+        spi.transfer(color >> 8);
+        spi.transfer(color & 0xFF);
+    }
+
+    digitalWrite(LCD_CS, HIGH);
+}
 
 void setup()
 {
-    Serial.begin(115200);
+    pinMode(LCD_CS, OUTPUT);
+    pinMode(LCD_DC, OUTPUT);
+    pinMode(LCD_RST, OUTPUT);
+    pinMode(LCD_BL, OUTPUT);
 
-    pinMode(GFX_BL, OUTPUT);
-    digitalWrite(GFX_BL, HIGH);
+    digitalWrite(LCD_BL, HIGH);
 
-    gfx->begin(40000000);
+    spi.begin(LCD_SCK, -1, LCD_MOSI, LCD_CS);
 
-    gfx->setRotation(1);
+    lcdInit();
 
-    // test
-    gfx->fillScreen(0xF800);
+    fillColor(0xF800);
     delay(1000);
 
-    gfx->fillScreen(0x07E0);
+    fillColor(0x07E0);
     delay(1000);
 
-    gfx->fillScreen(0x001F);
+    fillColor(0x001F);
     delay(1000);
 
-    gfx->fillScreen(0x0000);
+    fillColor(0xFFFF);
+    delay(1000);
 
-    gfx->setTextColor(0xFFFF);
-    gfx->setTextSize(3);
-
-    gfx->setCursor(20, 80);
-    gfx->println("ESP32-C6");
-
-    gfx->setCursor(20, 130);
-    gfx->println("WAVESHARE");
-
-    gfx->setCursor(20, 180);
-    gfx->println("LCD TEST");
+    fillColor(0x0000);
 }
 
 void loop()
