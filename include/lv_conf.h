@@ -7,12 +7,10 @@
 
 #define LV_USE_LOG 0
 
-#define LV_USE_PERF_MONITOR 0
+#define LV_USE_PERF_MONITOR 1
 
-#define LV_USE_LABEL 1
-#define LV_USE_BAR 1
-#define LV_USE_BTN 1
-
-#define LV_FONT_MONTSERRAT_22 1
+#define LV_TICK_CUSTOM 1
+#define LV_TICK_CUSTOM_INCLUDE "Arduino.h"
+#define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())
 
 #endif
